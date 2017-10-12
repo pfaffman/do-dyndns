@@ -1,0 +1,133 @@
+#!/bin/bash
+HOST=$HOSTNAME
+echo $0 "-------------------- Setting IP for $HOST.$DO_DYNDNS_DOMAIN"
+########################################
+# DO WE HAVE A KEY?
+########################################
+if [ -z "$DO_API_KEY" ]
+then
+   echo DO_API_KEY is empty or not defined
+   exit
+fi
+
+########################################
+# DO WE HAVE A DOMAIN?
+########################################
+if [ -z "DO_DYNDNS_DOMAIN" ]
+then
+   echo DO_DYNDNS_DOMAIN is empty or not defined
+   exit
+fi
+
+########################################
+# DO WE HAVE jq?
+########################################
+if ! ( which jq 2>&1 > /dev/null )
+then
+    echo Installing jq . . .
+    sudo apt install -y jq
+fi
+
+########################################
+#               GET THE IP             #
+########################################
+IFACE=none
+ip r |grep default > /tmp/route$PPID
+
+if grep default /tmp/route$PPID > /dev/null
+then
+    IFACE=`ip r |grep default |cut -d " " -f 5`
+    # echo Interface: $IFACE
+else
+    echo No default interface.
+    exit
+fi
+LOCAL_IP=`ip -4 a show $IFACE|grep inet|cut -d " " -f 6|cut -d '/' -f 1`
+FIREWALL=`dig +short myip.opendns.com @resolver1.opendns.com`
+
+
+########################################
+# SHOULD WE INSTALL?
+########################################
+if [ $# == 1 ]
+then
+    BASENAME=`basename $0`
+    if [ $1 == "--install" ]
+    then
+	echo Installing $BASENAME to /etc/network/if-up.d . . .
+	sudo mkdir -p /etc/$BASENAME
+	sudo chmod 700 /etc/$BASENAME
+	echo "#!/usr/bin/env bash" | sudo tee /etc/$BASENAME/$BASENAME
+	echo "export DO_API_KEY=$DO_API_KEY" | sudo tee -a /etc/$BASENAME/$BASENAME
+	echo $0 | sudo tee -a /etc/$BASENAME/$BASENAME
+	sudo chmod -R 600 /etc/$BASENAME
+	sudo chmod 700 /etc/$BASENAME/$BASENAME
+	sudo ln -sf /etc/$BASENAME/$BASENAME /etc/network/if-up.d/
+	sudo /etc/$BASENAME/$BASENAME
+	exit
+    else
+	echo ----------------------------------------
+	echo Use \"$0 --install\" to install
+	echo Help message should be here
+	echo ----------------------------------------
+    fi
+fi
+
+
+########################################
+# GIVE SOME HELP
+########################################
+
+help_message () {
+  echo $basename
+cat <<EOF
+Create or update DNS record for hostname using a Digital Ocean's API.
+Requires '$DO_DYNDNS_DOMAIN' and '$DO_API_KEY' to be defined.
+
+DO_DYNDNS_DOMAIN should be a registered domain managed by Digital Ocean.
+
+DO_API_KEY should be a Digital Ocean API key for the account that manages DO_DYNDNS_DOMAIN.
+
+To install this script with your DO_API_KEY into /etc/$BASENAME/$BASENAME and put a symlink
+in /etc/network/if-up.d so that it is run when a network device goes up, use:
+
+    $basename --install
+
+EOF
+
+  }
+
+########################################
+# Define the function that does the work
+########################################
+
+set_hostname () {
+  HOST=$1
+  DO_DYNDNS_DOMAIN=$2
+  IP=$3
+  # echo set_hostname: $HOST $DO_DYNDNS_DOMAIN $IP
+  # Get hostid if host exists
+  HOSTID=`curl  -s -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records" | jq -r ".domain_records[] | select(.name == \"$HOST\").id"`
+
+  # echo HOSTID: $HOSTID
+
+  if [ -n "$HOSTID" ]
+  then
+      echo Updating $HOSTID
+      curl -s -X PUT -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" -d "{\"data\":\"$IP\"}" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records/$HOSTID"
+      echo
+  else
+    echo Creating $HOST
+    curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" -d "{\"type\":\"A\",\"name\":\"$HOST\",\"data\":\"$IP\",\"priority\":null,\"port\":null,\"ttl\":1800,\"weight\":null}" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records"
+    echo
+  fi
+  echo "$HOST.$DO_DYNDNS_DOMAIN ($IP) --> `dig +short $HOST.$DO_DYNDNS_DOMAIN @ns1.digitalocean.com`"
+}
+
+########################################
+# Get on with the show
+########################################
+
+
+set_hostname $HOST $DO_DYNDNS_DOMAIN $LOCAL_IP
+set_hostname "$HOST-public" $DO_DYNDNS_DOMAIN $FIREWALL
