@@ -7,6 +7,9 @@ echo $0 "-------------------- Setting IP for $HOST.$DO_DYNDNS_DOMAIN"
 if [ -z "$DO_API_KEY" ]
 then
    echo DO_API_KEY is empty or not defined
+   echo
+   echo
+   help_message
    exit
 fi
 
@@ -16,6 +19,9 @@ fi
 if [ -z "DO_DYNDNS_DOMAIN" ]
 then
    echo DO_DYNDNS_DOMAIN is empty or not defined
+   echo
+   echo
+   help_message
    exit
 fi
 
@@ -68,7 +74,7 @@ then
     else
 	echo ----------------------------------------
 	echo Use \"$0 --install\" to install
-	echo Help message should be here
+	help_message
 	echo ----------------------------------------
     fi
 fi
