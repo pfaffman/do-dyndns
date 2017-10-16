@@ -3,6 +3,29 @@ HOST=$HOSTNAME
 TTL=300
 echo $0 "-------------------- Setting IP for $HOST.$DO_DYNDNS_DOMAIN"
 ########################################
+# GIVE SOME HELP
+########################################
+
+help_message () {
+  echo $basename
+cat <<EOF
+Create or update DNS record for hostname using a Digital Ocean's API.
+Requires '$DO_DYNDNS_DOMAIN' and '$DO_API_KEY' to be defined.
+
+DO_DYNDNS_DOMAIN should be a registered domain managed by Digital Ocean.
+
+DO_API_KEY should be a Digital Ocean API key for the account that manages DO_DYNDNS_DOMAIN.
+
+To install this script with your DO_API_KEY into /etc/$BASENAME/$BASENAME and put a symlink
+in /etc/network/if-up.d so that it is run when a network device goes up, use:
+
+    $basename --install
+
+EOF
+
+  }
+
+########################################
 # DO WE HAVE A KEY?
 ########################################
 if [ -z "$DO_API_KEY" ]
@@ -81,29 +104,6 @@ then
     fi
 fi
 
-
-########################################
-# GIVE SOME HELP
-########################################
-
-help_message () {
-  echo $basename
-cat <<EOF
-Create or update DNS record for hostname using a Digital Ocean's API.
-Requires '$DO_DYNDNS_DOMAIN' and '$DO_API_KEY' to be defined.
-
-DO_DYNDNS_DOMAIN should be a registered domain managed by Digital Ocean.
-
-DO_API_KEY should be a Digital Ocean API key for the account that manages DO_DYNDNS_DOMAIN.
-
-To install this script with your DO_API_KEY into /etc/$BASENAME/$BASENAME and put a symlink
-in /etc/network/if-up.d so that it is run when a network device goes up, use:
-
-    $basename --install
-
-EOF
-
-  }
 
 ########################################
 # Define the function that does the work
