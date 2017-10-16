@@ -1,5 +1,6 @@
 #!/bin/bash
 HOST=$HOSTNAME
+TTL=300
 echo $0 "-------------------- Setting IP for $HOST.$DO_DYNDNS_DOMAIN"
 ########################################
 # DO WE HAVE A KEY?
@@ -121,11 +122,11 @@ set_hostname () {
   if [ -n "$HOSTID" ]
   then
       echo Updating $HOSTID
-      curl -s -X PUT -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" -d "{\"data\":\"$IP\"}" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records/$HOSTID"
+      curl -s -X PUT -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" -d "{\"data\":\"$IP\",\"ttl\":$TTL}" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records/$HOSTID"
       echo
   else
     echo Creating $HOST
-    curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" -d "{\"type\":\"A\",\"name\":\"$HOST\",\"data\":\"$IP\",\"priority\":null,\"port\":null,\"ttl\":1800,\"weight\":null}" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records"
+    curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" -d "{\"type\":\"A\",\"name\":\"$HOST\",\"data\":\"$IP\",\"priority\":null,\"port\":null,\"ttl\":$TTL,\"weight\":null}" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records"
     echo
   fi
   echo "$HOST.$DO_DYNDNS_DOMAIN ($IP) --> `dig +short $HOST.$DO_DYNDNS_DOMAIN @ns1.digitalocean.com`"
