@@ -90,7 +90,7 @@ then
 	echo "#!/usr/bin/env bash" | sudo tee /etc/$BASENAME/$BASENAME
 	echo "export DO_API_KEY=$DO_API_KEY" | sudo tee -a /etc/$BASENAME/$BASENAME
 	echo "export DO_DYNDNS_DOMAIN=$DO_DYNDNS_DOMAIN" | sudo tee -a /etc/$BASENAME/$BASENAME
-	echo $0 | sudo tee -a /etc/$BASENAME/$BASENAME
+	echo `realpath $0` | sudo tee -a /etc/$BASENAME/$BASENAME
 	sudo chmod -R 600 /etc/$BASENAME
 	sudo chmod 700 /etc/$BASENAME/$BASENAME
 	sudo ln -sf /etc/$BASENAME/$BASENAME /etc/network/if-up.d/
