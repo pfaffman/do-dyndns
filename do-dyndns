@@ -16,7 +16,7 @@ fi
 ########################################
 # DO WE HAVE A DOMAIN?
 ########################################
-if [ -z "DO_DYNDNS_DOMAIN" ]
+if [ -z "$DO_DYNDNS_DOMAIN" ]
 then
    echo DO_DYNDNS_DOMAIN is empty or not defined
    echo
@@ -65,6 +65,7 @@ then
 	sudo chmod 700 /etc/$BASENAME
 	echo "#!/usr/bin/env bash" | sudo tee /etc/$BASENAME/$BASENAME
 	echo "export DO_API_KEY=$DO_API_KEY" | sudo tee -a /etc/$BASENAME/$BASENAME
+	echo "export DO_DYNDNS_DOMAIN=$DO_DYNDNS_DOMAIN" | sudo tee -a /etc/$BASENAME/$BASENAME
 	echo $0 | sudo tee -a /etc/$BASENAME/$BASENAME
 	sudo chmod -R 600 /etc/$BASENAME
 	sudo chmod 700 /etc/$BASENAME/$BASENAME
@@ -111,7 +112,7 @@ set_hostname () {
   HOST=$1
   DO_DYNDNS_DOMAIN=$2
   IP=$3
-  # echo set_hostname: $HOST $DO_DYNDNS_DOMAIN $IP
+  echo set_hostname: $HOST $DO_DYNDNS_DOMAIN $IP
   # Get hostid if host exists
   HOSTID=`curl  -s -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records" | jq -r ".domain_records[] | select(.name == \"$HOST\").id"`
 
