@@ -104,28 +104,55 @@ then
     fi
 fi
 
+########################################
+# Get existing hostname
+########################################
+get_host_record() {
+
+  echo GET HOST RECORD: $HOST.$DO_DYNDNS_DOMAIN >&2
+
+  PAGE=`curl  -s -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records"`
+  HOSTID=`echo $PAGE | jq -r ".domain_records[] | select(.name == \"$HOST\").id"`
+  LAST="FIRST"
+
+  NEXT=`echo $PAGE | jq -r ".links.pages.next"`
+
+  echo "NEXT: $NEXT" >&2
+
+  while [ -z "$HOSTID" ] && [ ! -z "$NEXT" ]
+  do
+    LAST=$NEXT
+    echo "Getting: $NEXT -- LAST: $LAST" >&2
+    PAGE=`curl  -s -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" "$NEXT"`
+    HOSTID=`echo $PAGE | jq -r ".domain_records[] | select(.name == \"$HOST\").id"`
+    NEXT=`echo $PAGE | jq -r ".links.pages.next"`
+  done
+  echo $HOSTID
+}
+
 
 ########################################
 # Define the function that does the work
 ########################################
 
-set_hostname () {
+set_hostname() {
   HOST=$1
   DO_DYNDNS_DOMAIN=$2
   IP=$3
-  echo set_hostname: $HOST $DO_DYNDNS_DOMAIN $IP
+  echo set_hostname: $HOST $DO_DYNDNS_DOMAIN $IP >&2
   # Get hostid if host exists
-  HOSTID=`curl  -s -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records" | jq -r ".domain_records[] | select(.name == \"$HOST\").id"`
 
-  echo HOSTID: "$HOSTID"
+  HOSTID=$(get_host_record)
+
+  echo HOSTID: "$HOSTID" >&2
 
   if [ -n "$HOSTID" ]
   then
-      echo Updating $HOSTID
+      echo Updating $HOSTID >&2
       curl -s -X PUT -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" -d "{\"data\":\"$IP\",\"ttl\":$TTL}" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records/$HOSTID"
       echo
   else
-    echo Creating $HOST
+    echo Creating $HOST >&2
     curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" -d "{\"type\":\"A\",\"name\":\"$HOST\",\"data\":\"$IP\",\"priority\":null,\"port\":null,\"ttl\":$TTL,\"weight\":null}" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records"
     echo
   fi
@@ -135,7 +162,6 @@ set_hostname () {
 ########################################
 # Get on with the show
 ########################################
-
 
 set_hostname $HOST $DO_DYNDNS_DOMAIN $LOCAL_IP
 set_hostname "$HOST-public" $DO_DYNDNS_DOMAIN $FIREWALL
