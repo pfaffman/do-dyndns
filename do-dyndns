@@ -117,7 +117,7 @@ set_hostname () {
   # Get hostid if host exists
   HOSTID=`curl  -s -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_KEY" "https://api.digitalocean.com/v2/domains/$DO_DYNDNS_DOMAIN/records" | jq -r ".domain_records[] | select(.name == \"$HOST\").id"`
 
-  # echo HOSTID: $HOSTID
+  echo HOSTID: "$HOSTID"
 
   if [ -n "$HOSTID" ]
   then
