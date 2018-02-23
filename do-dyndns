@@ -17,7 +17,7 @@ DO_DYNDNS_DOMAIN should be a registered domain managed by Digital Ocean.
 DO_API_KEY should be a Digital Ocean API key for the account that manages DO_DYNDNS_DOMAIN.
 
 To install this script with your DO_API_KEY into /etc/$BASENAME/$BASENAME and put a symlink
-in /etc/network/if-up.d so that it is run when a network device goes up, use:
+in /etc/NetworkdManager/dispatch.d so that it is run when a network state changes, use:
 
     $basename --install
 
@@ -61,20 +61,11 @@ fi
 ########################################
 #               GET THE IP             #
 ########################################
-IFACE=none
-ip r |grep default > /tmp/route$PPID
-
-if grep default /tmp/route$PPID > /dev/null
-then
-    IFACE=`ip r get 8.8.8.8 |head -1 |cut -d " " -f 5`
-    # echo Interface: $IFACE
-else
-    echo No default interface.
-    exit
-fi
+IFACE=`ip r get 8.8.8.8 |head -1 |cut -d " " -f 5`
 LOCAL_IP=`ip -4 a show $IFACE|grep inet|cut -d " " -f 6|cut -d '/' -f 1`
 FIREWALL=`dig +short myip.opendns.com @resolver1.opendns.com`
 
+echo "I $IFACE, IP $LOCAL_IP, FW: $FIREWALL. $0 -- $1"
 
 ########################################
 # SHOULD WE INSTALL?
@@ -84,7 +75,7 @@ then
     BASENAME=`basename $0`
     if [ $1 == "--install" ]
     then
-	echo Installing $BASENAME to /etc/network/if-up.d . . .
+	echo Installing $BASENAME to /etc/NetworkManager/dispatcher.d/
 	sudo mkdir -p /etc/$BASENAME
 	sudo chmod 700 /etc/$BASENAME
 	echo "#!/usr/bin/env bash" | sudo tee /etc/$BASENAME/$BASENAME
@@ -93,7 +84,7 @@ then
 	echo `realpath $0` | sudo tee -a /etc/$BASENAME/$BASENAME
 	sudo chmod -R 600 /etc/$BASENAME
 	sudo chmod 700 /etc/$BASENAME/$BASENAME
-	sudo ln -sf /etc/$BASENAME/$BASENAME /etc/network/if-up.d/
+	sudo ln -sf /etc/$BASENAME/$BASENAME /etc/NetworkManager/dispatcher.d
 	sudo /etc/$BASENAME/$BASENAME
 	exit
     else
