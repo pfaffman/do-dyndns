@@ -66,7 +66,7 @@ ip r |grep default > /tmp/route$PPID
 
 if grep default /tmp/route$PPID > /dev/null
 then
-    IFACE=`ip r |grep default |cut -d " " -f 5`
+    IFACE=`ip r get 8.8.8.8 |head -1 |cut -d " " -f 5`
     # echo Interface: $IFACE
 else
     echo No default interface.
