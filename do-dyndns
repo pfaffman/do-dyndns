@@ -67,13 +67,23 @@ FIREWALL=`dig +short myip.opendns.com @resolver1.opendns.com`
 
 echo "I $IFACE, IP $LOCAL_IP, FW: $FIREWALL. $0 -- $1"
 
+
+########################################
+# Is old-style if-up installed?
+########################################
+
+if [ -e /etc/network/if-up.d/do-dyndns ]
+   INSTALL="YES"
+   sudo rm /etc/network/if-up.d/do-dyndns
+fi
+
 ########################################
 # SHOULD WE INSTALL?
 ########################################
-if [ $# == 1 ]
+if [ "$#" == 1 || "$INSTALL" == "YES" ]
 then
     BASENAME=`basename $0`
-    if [ $1 == "--install" ]
+    if [ "$1" == "--install" || "$INSTALL" == "YES" ]
     then
 	echo Installing $BASENAME to /etc/NetworkManager/dispatcher.d/
 	sudo mkdir -p /etc/$BASENAME
@@ -120,6 +130,8 @@ get_host_record() {
   done
   echo $HOSTID
 }
+
+
 
 
 ########################################
