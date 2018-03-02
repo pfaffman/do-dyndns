@@ -73,6 +73,7 @@ echo "I $IFACE, IP $LOCAL_IP, FW: $FIREWALL. $0 -- $1"
 ########################################
 
 if [ -e /etc/network/if-up.d/do-dyndns ]
+then
    INSTALL="YES"
    sudo rm /etc/network/if-up.d/do-dyndns
 fi
@@ -80,10 +81,10 @@ fi
 ########################################
 # SHOULD WE INSTALL?
 ########################################
-if [ "$#" == 1 || "$INSTALL" == "YES" ]
+if [ "$#" == 1 ] || [ "$INSTALL" == "YES" ]
 then
     BASENAME=`basename $0`
-    if [ "$1" == "--install" || "$INSTALL" == "YES" ]
+    if [ "$1" == "--install" ] || [ "$INSTALL" == "YES" ]
     then
 	echo Installing $BASENAME to /etc/NetworkManager/dispatcher.d/
 	sudo mkdir -p /etc/$BASENAME
@@ -145,6 +146,13 @@ set_hostname() {
   echo set_hostname: $HOST $DO_DYNDNS_DOMAIN $IP >&2
   # Get hostid if host exists
 
+  CURRENT_IP=`dig +short $HOST.$DO_DYNDNS_DOMAIN @ns1.digitalocean.com`
+  if [ "$IP" == "$CURRENT_IP" ]
+  then
+      echo "IP has not changed."
+      return
+  fi
+
   HOSTID=$(get_host_record)
 
   echo HOSTID: "$HOSTID" >&2
@@ -168,3 +176,4 @@ set_hostname() {
 
 set_hostname $HOST $DO_DYNDNS_DOMAIN $LOCAL_IP
 set_hostname "$HOST-public" $DO_DYNDNS_DOMAIN $FIREWALL
+echo $0 "-------------------- Setting IP for $HOST.$DO_DYNDNS_DOMAIN DONE"
