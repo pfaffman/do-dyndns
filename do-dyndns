@@ -59,6 +59,15 @@ then
 fi
 
 ########################################
+# DO WE HAVE curl?
+########################################
+if ! ( which curl 2>&1 > /dev/null )
+then
+    echo Installing curl . . .
+    sudo apt install -y curl
+fi
+
+########################################
 #               GET THE IP             #
 ########################################
 IFACE=`ip r get 8.8.8.8 |head -1 |cut -d " " -f 5`
