@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+REMOTE_HOST="$1"
+if [ ! -z "$2" ]
+then
+  DO_API_KEY=$2
+else
+  DO_API_KEY=$DO_API_KEY
+fi
+if [ ! -z "$3" ]
+then
+  DO_DYNDNS_DOMAIN=$3
+else
+  DO_DYNDNS_DOMAIN=$DO_DYNDNS_DOMAIN
+fi
+if [ -z "DO_DYNDNS_DOMAIN" ]
+then
+  echo No DO_DYNDNS_DOMAIN defined. Quitting.
+  exit
+fi
+if [ -z "DO_API_KEY" ]
+then
+  echo No DO_API_KEY defined. Quitting.
+  exit
+fi
+cat > /tmp/do-dnydns-install  <<EOF
+git clone https://github.com/pfaffman/do-dyndns
+export DO_API_KEY=$DO_API_KEY
+export DO_DYNDNS_DOMAIN=$DO_DYNDNS_DOMAIN
+do-dyndns/do-dyndns --install
+EOF
+chmod +x /tmp/do-dnydns-install
+scp /tmp/do-dnydns-install $REMOTE_HOST:
+ssh $REMOTE_HOST ./do-dnydns-install
