@@ -1,5 +1,23 @@
 #!/bin/bash
-HOST=$HOSTNAME
+if [ ! -z "$1" ]
+then
+  DOMAIN=`echo $1 | cut -d "." -f 2-9`
+  if [ ! -z "$DOMAIN" ]
+  then
+    DO_DYNDNS_DOMAIN=$DOMAIN
+  fi
+  HOST=`echo $1 | cut -d "." -f 1`
+else
+  HOST=$HOSTNAME
+fi
+
+if [ ! -z "$2" ]
+then
+  LOCAL_IP="$2"
+else
+  LOCAL_IP="0"
+fi
+
 TTL=300
 echo $0 "-------------------- Setting IP for $HOST.$DO_DYNDNS_DOMAIN"
 ########################################
@@ -70,9 +88,15 @@ fi
 ########################################
 #               GET THE IP             #
 ########################################
-IFACE=`ip r get 8.8.8.8 |head -1 |cut -d " " -f 5`
-LOCAL_IP=`ip -4 a show $IFACE|grep inet|cut -d " " -f 6|cut -d '/' -f 1`
-FIREWALL=`dig +short myip.opendns.com @resolver1.opendns.com`
+if [ $LOCAL_IP == "0" ]
+then
+  IFACE=`ip r get 8.8.8.8 |head -1 |cut -d " " -f 5`
+  LOCAL_IP=`ip -4 a show $IFACE|grep inet|cut -d " " -f 6|cut -d '/' -f 1`
+  FIREWALL=`dig +short myip.opendns.com @resolver1.opendns.com`
+else
+  LOCAL_IP="$2"
+  FIREWALL=$LOCAL_IP
+fi
 
 echo "I $IFACE, IP $LOCAL_IP, FW: $FIREWALL. $0 -- $1"
 
@@ -140,9 +164,6 @@ get_host_record() {
   done
   echo $HOSTID
 }
-
-
-
 
 ########################################
 # Define the function that does the work
