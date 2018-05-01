@@ -207,6 +207,7 @@ set_hostname() {
 
 set_hostname $HOST $DO_DYNDNS_DOMAIN $LOCAL_IP
 if [ -z $NOPUBLIC ]
+then
    set_hostname "$HOST-public" $DO_DYNDNS_DOMAIN $FIREWALL
 fi
 echo $0 "-------------------- Setting IP for $HOST.$DO_DYNDNS_DOMAIN DONE"
